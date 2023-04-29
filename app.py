@@ -77,20 +77,22 @@ def save_blob(file_name, file_content):
 
 @app.route('/download_model', methods=['POST'])
 def download_model():
-    filename=cacheModel["mdlFile"]
-
-    if os.path.isfile(cacheModel["mdlFile"]):
-        return "Model file already available: "+ cacheModel["mdlFile"]
-
-    message="started at: " +datetime.datetime.utcnow()
-    sas_token = generate_account_sas(
-        account_name="mldevworspace8102427333",
-        account_key="6ifYiqRSm2JuVkm5SRO7Dm1NK2crQv3R/ynHLdfbwP4uPq58Sw5oeyUphE2klNj2GLHoRYadDcBE+AStOxHEvg==",
-        resource_types=ResourceTypes(service=True, container=True, object=True),
-        permission=AccountSasPermissions(read=True),
-        expiry=datetime.datetime.utcnow() + timedelta(hours=1)
-    )
+    message="Proceeding to download Model"
     try:
+        filename=cacheModel["mdlFile"]
+
+        if os.path.isfile(cacheModel["mdlFile"]):
+            return "Model file already available: "+ cacheModel["mdlFile"]
+
+        message= message +"\nstarted at: "
+        sas_token = generate_account_sas(
+            account_name="mldevworspace8102427333",
+            account_key="6ifYiqRSm2JuVkm5SRO7Dm1NK2crQv3R/ynHLdfbwP4uPq58Sw5oeyUphE2klNj2GLHoRYadDcBE+AStOxHEvg==",
+            resource_types=ResourceTypes(service=True, container=True, object=True),
+            permission=AccountSasPermissions(read=True),
+            expiry=datetime.datetime.utcnow() + timedelta(hours=1)
+        )
+
     #   account_url="https://mldevworspace8102427333.blob.core.windows.net/model-container/TFModel02.h5",
         serviceClient = BlobServiceClient(
             account_url="https://mldevworspace8102427333.blob.core.windows.net",
@@ -100,10 +102,10 @@ def download_model():
             "model-container", "TFModel02.h5", snapshot=None)
 
         bytes = blob_client_instance.download_blob().readall()
-        message=message + "\nModel Downloaded: "+datetime.datetime.utcnow()
+        message=message + "\nModel Downloaded: "
 
         save_blob(filename, bytes)
-        message=message + "\nModel Saved: "+datetime.datetime.utcnow()
+        message=message + "\nModel Saved: "
     except:
         message = message +"\nError :" + traceback.format_exc()
         #track = traceback.format_exc()
@@ -156,7 +158,7 @@ def classify():
             df = df.loc[df["CategoryDescription"].isin(list_10cat)]
             data = df["Description_New"]
 
-            pred_val = get_categories(data)
+                                    pred_val = get_categories(data)
             # print(pred_val)
 
             Pred_Data = pd.concat([df, pred_val], axis=1)
