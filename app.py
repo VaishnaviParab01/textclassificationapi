@@ -137,8 +137,8 @@ def load_model():
        print("Model Loaded")
        return "Model Loaded"
     except:
-        track = traceback.format_exc()
-        return (track)
+       track = traceback.format_exc()
+       return (track)
 
 @app.route('/classifyresult', methods=['POST'])
 def classify():
@@ -150,15 +150,12 @@ def classify():
             df = pd.read_csv(file)  # file.file
 
             df['Description_New'] = df['Description'].apply(lambda x: semi_clean(x))
-            df["Combo"] = np.where((df["Reference"].notnull()) & (df["Description"] != df["Reference"]) & (
-                        df["Reference"].str.isnumeric() == False), df["Description"] + ' ' + df["Reference"],
-                                   df["Description"])
+            df["Combo"] = np.where((df["Reference"].notnull()) & (df["Description"] != df["Reference"]) & (df["Reference"].str.isnumeric() == False), df["Description"] + ' ' + df["Reference"], df["Description"])
             df.drop(columns=['Description', 'Reference'], axis=1, inplace=True)
             df.rename(columns={'Combo': 'Description'}, inplace=True)
             df = df.loc[df["CategoryDescription"].isin(list_10cat)]
             data = df["Description_New"]
-
-                                    pred_val = get_categories(data)
+            pred_val = get_categories(data)
             # print(pred_val)
 
             Pred_Data = pd.concat([df, pred_val], axis=1)
