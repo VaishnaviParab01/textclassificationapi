@@ -12,7 +12,26 @@
             <!-- <img  src="/docs/5.1/assets/brand/bootstrap-logo.svg" alt="" width="72" height="57"> -->
             <h1 class="display-6 fw-bold text-primary">Welcome to Text Classification Demo</h1>
           </div>
-        <form method="post" action="{{url_for('classify')}}" enctype="multipart/form-data">
+        <div class="px-4 py-3 my-2 text-center" style="float:none;display:block;">
+            <div style="float:left;padding-left:250px;">
+       <form method="POST" action="{{url_for('is_model_available')}}" target="ifrm">
+           <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Check if model available</button>
+       </form>
+       </div>
+       <div  style="float:left;padding-left:50px;">
+       <form method="POST" action="{{url_for('download_model')}}"  target="ifrm">
+           <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Download Model</button>
+       </form>
+       </div>
+         <div  style="float:left;padding-left:50px;">
+       <form method="POST" action="{{url_for('load_model')}}"  target="ifrm">
+           <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Load Model</button>
+       </form>
+       </div>
+        </div>
+         <br/>&nbsp;<br/>&nbsp;
+        <div class="px-4 py-3 my-2 text-center">
+        <form method="post" action="{{url_for('classify')}}" enctype="multipart/form-data" target="ifrm">
             <div class="col-md-6 mx-auto text-center">
                 <label for="fl" class="form-label fw-bold fs-5">Upload content file for classification:</label>
 
@@ -25,6 +44,8 @@
                 </div>            
             </div>
         </form>
+        </div>
+                    <iframe name="ifrm" id="ifrm" width="100%" align="center"></iframe>
      </main>      
    </body>
 </html>
