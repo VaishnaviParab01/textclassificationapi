@@ -3,6 +3,16 @@
     <title>Text classification Demo on Azure</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        .link-button {
+     background: none;
+     border: none;
+     color: #1a0dab;
+     text-decoration: underline;
+     cursor: pointer;
+}
+
+    </style>
 </head>
 <html>
    <body>
@@ -15,17 +25,17 @@
         <div class="px-4 py-3 my-2 text-center" style="float:none;display:block;">
             <div style="float:left;padding-left:250px;">
        <form method="POST" action="{{url_for('is_model_available')}}" target="ifrm">
-           <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Check if model available</button>
+           <button type="submit" class="link-button">Check if model available</button>
        </form>
        </div>
        <div  style="float:left;padding-left:50px;">
        <form method="POST" action="{{url_for('download_model')}}"  target="ifrm">
-           <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Download Model</button>
+           <button type="submit" class="link-button">Download Model</button>
        </form>
        </div>
          <div  style="float:left;padding-left:50px;">
        <form method="POST" action="{{url_for('load_model')}}"  target="ifrm">
-           <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Load Model</button>
+           <button type="submit" class="link-button">Load Model</button>
        </form>
        </div>
         </div>
