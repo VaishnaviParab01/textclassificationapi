@@ -27,6 +27,9 @@ Lab = {0: 'Bank Charges and Fees', 1: 'Groceries', 2: 'Transport and Fuel', 3: '
 list_10cat = ['Bank Charges and Fees', 'Groceries', 'Transport and Fuel', 'Cellphone', 'Restaurants and Take-Aways',
               'Entertainment', 'Internet and Telephone', 'Holidays and Travel', 'Clothing', 'Gambling']
 
+cacheModel = {}
+cacheModel["mdlFile"]="./TFModel02.h5"
+
 def semi_clean(text):
     final_string = ""
     text = text.lower()
@@ -38,23 +41,24 @@ def semi_clean(text):
     final_string = text
     return final_string
 
-
 def predict(model, data):
     pred = model.predict(data)
     return list(map(lambda x: (Lab[x.argmax()], x.max()), pred))
 
+def get_categories(data):
+    if "model_tf02" in cacheModel and cacheModel["model_tf02"] != None:
+        print("Model already Loaded")
+    else:
+        download_model()
 
-def get_categories(data,LoadModel_TF02):
-    pred_data = pd.DataFrame(np.array(predict(LoadModel_TF02, data)))
+    pred_data = pd.DataFrame(np.array(predict(cacheModel["model_tf02"], data)))
     pred_data.columns = ["Prediction Category", "Prediction Probability"]
     return pred_data
-
 
 @app.route('/')
 def index():
     print('Request for index page received')
     return render_template('index.html')
-
 
 @app.route('/favicon.ico')
 def favicon():
@@ -71,7 +75,14 @@ def save_blob(file_name, file_content):
     with open(download_file_path, "wb") as file:
         file.write(file_content)
 
-def download_model(filename):
+@app.route('/download_model', methods=['POST'])
+def download_model():
+    filename=cacheModel["mdlFile"]
+
+    if os.path.isfile(cacheModel["mdlFile"]):
+        return "Model file already available: "+ cacheModel["mdlFile"]
+
+    message="started at: " +datetime.datetime.utcnow()
     sas_token = generate_account_sas(
         account_name="mldevworspace8102427333",
         account_key="6ifYiqRSm2JuVkm5SRO7Dm1NK2crQv3R/ynHLdfbwP4uPq58Sw5oeyUphE2klNj2GLHoRYadDcBE+AStOxHEvg==",
@@ -79,46 +90,60 @@ def download_model(filename):
         permission=AccountSasPermissions(read=True),
         expiry=datetime.datetime.utcnow() + timedelta(hours=1)
     )
+    try:
+    #   account_url="https://mldevworspace8102427333.blob.core.windows.net/model-container/TFModel02.h5",
+        serviceClient = BlobServiceClient(
+            account_url="https://mldevworspace8102427333.blob.core.windows.net",
+            credential=sas_token, blob_name="TFModel02.h5")
 
-#   account_url="https://mldevworspace8102427333.blob.core.windows.net/model-container/TFModel02.h5",
-    serviceClient = BlobServiceClient(
-        account_url="https://mldevworspace8102427333.blob.core.windows.net",
-        credential=sas_token, blob_name="TFModel02.h5")
+        blob_client_instance = serviceClient.get_blob_client(
+            "model-container", "TFModel02.h5", snapshot=None)
 
-    blob_client_instance = serviceClient.get_blob_client(
-        "model-container", "TFModel02.h5", snapshot=None)
+        bytes = blob_client_instance.download_blob().readall()
+        message=message + "\nModel Downloaded: "+datetime.datetime.utcnow()
 
-    bytes = blob_client_instance.download_blob().readall()
-    print("Model Downloaded, Saving to location")
-    print(datetime.datetime.utcnow())
-    save_blob(filename, bytes)
-    print("Model saved to location: ",filename)
-    print(datetime.datetime.utcnow())
+        save_blob(filename, bytes)
+        message=message + "\nModel Saved: "+datetime.datetime.utcnow()
+    except:
+        message = message +"\nError :" + traceback.format_exc()
+        #track = traceback.format_exc()
 
+    return message
 
-mdl = "./TFModel02.h5"
+@app.route('/check_model_file', methods=['POST'])
+def is_model_available():
+    if os.path.isfile(cacheModel["mdlFile"]):
+        return "Model file available: "+ cacheModel["mdlFile"]
+    else:
+        return "Model file not available: "+ cacheModel["mdlFile"]
 
-if not os.path.isfile(mdl):
-    print("Model does not exist, Downloading Model first")
-    print(datetime.datetime.utcnow())
-    download_model(mdl)
+@app.route('/load_model', methods=['POST'])
+def load_model():
+    try:
+       #download_model("./TFModel02.h5")
+       if "model_tf02" in cacheModel  and  cacheModel["model_tf02"]!=None:
+           return "Model already Loaded"
 
-print("Model available in project folder")
+       if not os.path.isfile(cacheModel["mdlFile"]):
+            return "Model file not available, download it first."
+       else:
+            print("Model available in project folder, loading")
 
-preprocessor = hub.KerasLayer("universal-sentence-encoder-cmlm_multilingual-preprocess_2")
-print("Pre processor Loaded")
-LoadModel_TF02 = tf.keras.models.load_model(mdl, compile=False, custom_objects={'KerasLayer': preprocessor})
-print("Model Loaded")
+       preprocessor = hub.KerasLayer("universal-sentence-encoder-cmlm_multilingual-preprocess_2")
+       print("Pre processor Loaded")
+       cacheModel["model_tf02"] = tf.keras.models.load_model(cacheModel["mdlFile"], compile=False, custom_objects={'KerasLayer': preprocessor})
+       print("Model Loaded")
+       return "Model Loaded"
+    except:
+        track = traceback.format_exc()
+        return (track)
 
 @app.route('/classifyresult', methods=['POST'])
 def classify():
     file = request.files['file']
-
     if file:
-
         try:
             result = ""
-
             # TODO: Classify Content and return Result Content as CSV FIle
             df = pd.read_csv(file)  # file.file
 
@@ -131,7 +156,7 @@ def classify():
             df = df.loc[df["CategoryDescription"].isin(list_10cat)]
             data = df["Description_New"]
 
-            pred_val = get_categories(data,LoadModel_TF02)
+            pred_val = get_categories(data)
             # print(pred_val)
 
             Pred_Data = pd.concat([df, pred_val], axis=1)
